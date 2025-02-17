@@ -4,8 +4,8 @@ const port = 6060
 const cors = require('cors')
 const bcrypt = require('bcryptjs')
 const salt = bcrypt.genSaltSync(10)
-const db = require('./config/index')
-const UserModel = require('./models/UserModel')
+const db = require('./src/config/index')
+const UserModel = require('./src/models/UserModel')
 app.use('/uploads',express.static(path.join(__dirname,'/uploads')))
 db.connect()
 app.use(cors({
