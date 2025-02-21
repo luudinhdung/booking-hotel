@@ -2,10 +2,12 @@ const express = require('express')
 const app = express()
 const port = 6060
 const cors = require('cors')
+const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const salt = bcrypt.genSaltSync(10)
 const db = require('./src/config/index')
 const UserModel = require('./src/models/UserModel')
+
 db.connect()
 app.use(cors({
   credentials: true,
@@ -18,7 +20,7 @@ extended:true
 }))
 //xQYLaGDmO7JLesCq
 app.post('/register',async (req,res)=>{
-    const {name,email,password,role,avatar} = req.body
+  const {name,email,password,role,avatar} = req.body
     try {
        const checkEmail = await UserModel.findOne({
          email:email
@@ -43,3 +45,29 @@ app.post('/register',async (req,res)=>{
         res.status(422).json(error)
     }
    })
+app.post('/login', async (req, res) => {
+  try {
+    const {email, password} = req.body
+    const user = await UserModel.findOne({email})
+    if(user) {
+      const checkPass = bcrypt.compareSync(password,user.password)
+      if(checkPass){
+        jwt.sign({
+          email:user.email,
+          id:user._id,
+        }, jwtSecret, (err,token) => {
+          if (err) throw err
+          res.cookie('token', token,{ httpOnly: true }).json({user,mess:'Đăng nhập thành công'});
+        });
+     
+        }else{
+          res.json({
+            mess:'Sai mật khẩu'
+        })
+      }
+    }
+   }catch(error){
+      res.status(422).json(eror)
+   }
+
+})
