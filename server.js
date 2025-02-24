@@ -1,9 +1,50 @@
-require('dotenv').config();
-const app = require('./src/app')
+const express = require('express')
+const app = express()
+const port = 6060
+const cors = require('cors')
+const bcrypt = require('bcryptjs')
+const salt = bcrypt.genSaltSync(10)
+const db = require('./src/config/index')
+const UserModel = require('./src/models/UserModel')
+db.connect()
+app.use(cors({
+  credentials: true,
+  origin: true 
+ }));
+app.use(cookieParser())
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({
+extended:true
+}))
+//xQYLaGDmO7JLesCq
+app.post('/register',async (req,res)=>{
+    const {name,email,password,role,avatar} = req.body
+    try {
+       const checkEmail = await UserModel.findOne({
+         email:email
+       })
+       if(checkEmail){
+         return res.json({
+           mess:'tai khoan da ton tai'
+         })
+       }else if(!checkEmail){
+          await UserModel.create({
+            name,
+             email,
+             password:bcrypt.hashSync(password,salt),
+             role,
+             avatar
+         })
+         return res.json({
+           mess:'dang ki thanh cong'
+         })
+       }
+    } catch (error) {
+        res.status(422).json(error)
+    }
+   })
 
-const {PORT} = process.env;
-
-app.post('/places',async (req,res)=>{
+   app.post('/places',async (req,res)=>{
     const {title,address,addedPhotos,desc,checkIn,checkOut,maxGuests,price}= req.body
     const {token} = req.cookies
     if(token){
@@ -27,10 +68,3 @@ app.post('/places',async (req,res)=>{
     const data = await PlaceModel.findById(id)
     res.json(data)
   })
-const server = app.listen( PORT, () => {
-    console.log(`WSV start with port ${PORT}`);
-})
-
-process.on('SIGINT', () => {
-    server.close( () => console.log(`exits server express`))
-})
